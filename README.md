@@ -1,6 +1,8 @@
 # JXON_ahk2
 JSON serializer for AHK v2
 
+Thanks to cocobelgica for his initial AHK v1 release [here](https://github.com/cocobelgica/AutoHotkey-JSON).
+
 The focus of this serializer is compatibility with JSON.
 
 Only Array(), Map(), or a nested combination is supported.
