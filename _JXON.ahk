@@ -1,6 +1,9 @@
-﻿; AHK v2
+﻿;;;; AHK v2
 ; Example ===================================================================================
 ; ===========================================================================================
+
+t := Map("test","")
+msgbox jxon_dump(t,4)
 
 ; Msgbox "The idea here is to create several nested arrays, save to text with jxon_dump(), and then reload the array with jxon_load().  The resulting array should be the same.`r`n`r`nThis is what this example shows."
 ; a := Map(), b := Map(), c := Map(), d := Map(), e := Map(), f := Map() ; Object() is more technically correct than {} but both will work.
@@ -179,9 +182,6 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 			if IsObject(k) || (k == "")
 				throw Error("Invalid object key.", -1, k ? Format("<Object at 0x{:p}>", ObjPtr(obj)) : "<blank>")
 			
-			; If (k = "")
-				; Continue
-			
 			if !is_array ;// key ; ObjGetCapacity([k], 1)
 				out .= (ObjGetCapacity([k]) ? Jxon_Dump(k) : q k q) (indent ? ": " : ":") ; token + padding
 			
@@ -200,12 +200,12 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 		If (Type(obj) != "String")
 			return obj
 		Else {
+            obj := StrReplace(obj,"\","\\")
 			obj := StrReplace(obj,"`t","\t")
 			obj := StrReplace(obj,"`r","\r")
 			obj := StrReplace(obj,"`n","\n")
 			obj := StrReplace(obj,"`b","\b")
 			obj := StrReplace(obj,"`f","\f")
-			obj := StrReplace(obj,"\","\\")
 			obj := StrReplace(obj,"/","\/")
 			obj := StrReplace(obj,q,"\" q)
 			return q obj q
