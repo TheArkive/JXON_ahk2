@@ -2,9 +2,6 @@
 ; Example ===================================================================================
 ; ===========================================================================================
 
-t := Map("test","")
-msgbox jxon_dump(t,4)
-
 ; Msgbox "The idea here is to create several nested arrays, save to text with jxon_dump(), and then reload the array with jxon_load().  The resulting array should be the same.`r`n`r`nThis is what this example shows."
 ; a := Map(), b := Map(), c := Map(), d := Map(), e := Map(), f := Map() ; Object() is more technically correct than {} but both will work.
 
