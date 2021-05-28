@@ -158,7 +158,7 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 		is_array := (memType = "Array") ? 1 : 0
 		
 		if (memType ? (memType != "Object" And memType != "Map" And memType != "Array") : (ObjGetCapacity(obj) == ""))
-			throw Error("Object type not supported.", -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
+			throw Error("Object type not supported.`r`n`r`nObj Type: " Type(obj), -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
 		
 		if IsInteger(indent)
 		{
