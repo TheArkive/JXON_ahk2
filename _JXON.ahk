@@ -37,12 +37,12 @@
 ; https://github.com/cocobelgica/AutoHotkey-JSON
 
 Jxon_Load(&src, args*) {
-	static q := Chr(34)
+	; static q := Chr(34)
 	
 	key := "", is_key := false
 	stack := [ tree := [] ]
 	is_arr := Map(tree, 1) ; ahk v2
-	next := q "{[01234567890-tfn"
+	next := '"{[01234567890-tfn'
 	pos := 0
 	
 	while ( (ch := SubStr(src, ++pos, 1)) != "" ) {
@@ -59,8 +59,8 @@ Jxon_Load(&src, args*) {
 			  : (next == "'")     ? "Unterminated string starting at"
 			  : (next == "\")     ? "Invalid \escape"
 			  : (next == ":")     ? "Expecting ':' delimiter"
-			  : (next == q)       ? "Expecting object key enclosed in double quotes"
-			  : (next == q . "}") ? "Expecting object key enclosed in double quotes or object closing '}'"
+			  : (next == '"')     ? "Expecting object key enclosed in double quotes"
+			  : (next == '"}')    ? "Expecting object key enclosed in double quotes or object closing '}'"
 			  : (next == ",}")    ? "Expecting ',' delimiter or object closing '}'"
 			  : (next == ",]")    ? "Expecting ',' delimiter or array closing ']'"
 			  : [ "Expecting JSON value(string, number, [true, false, null], object or array)"
@@ -81,17 +81,17 @@ Jxon_Load(&src, args*) {
 			stack.InsertAt(1,val)
 			
 			is_arr[val] := !(is_key := ch == "{")
-			next := q (is_key ? "}" : "{[]0123456789-tfn")
+			next := '"' (is_key ? "}" : "{[]0123456789-tfn")
 		} else if InStr("}]", ch) {
 			stack.RemoveAt(1)
 			next := stack[1]==tree ? "" : is_arr[stack[1]] ? ",]" : ",}"
 		} else if InStr(",:", ch) {
 			is_key := (!is_array && ch == ",")
-			next := is_key ? q : q "{[0123456789-tfn"
+			next := is_key ? '"' : '"{[0123456789-tfn'
 		} else { ; string | number | true | false | null
-			if (ch == q) { ; string
+			if (ch == '"') { ; string
 				i := pos
-				while i := InStr(src, q,, i+1) {
+				while i := InStr(src, '"',, i+1) {
 					val := StrReplace(SubStr(src, pos+1, i-pos-1), "\\", "\u005C")
 					if (SubStr(val, -1) != "\")
 						break
@@ -102,7 +102,7 @@ Jxon_Load(&src, args*) {
 				pos := i ; update pos
 
 				val := StrReplace(val, "\/", "/")
-				val := StrReplace(val, "\" . q, q)
+				val := StrReplace(val, '\"', '"')
 				, val := StrReplace(val, "\b", "`b")
 				, val := StrReplace(val, "\f", "`f")
 				, val := StrReplace(val, "\n", "`n")
@@ -151,14 +151,12 @@ Jxon_Load(&src, args*) {
 }
 
 Jxon_Dump(obj, indent:="", lvl:=1) {
-	static q := Chr(34)
-	
 	if IsObject(obj) {
 		memType := Type(obj) ; Type.Call(obj)
 		is_array := (memType = "Array") ? 1 : 0
 		
 		if (memType ? (memType != "Object" And memType != "Map" And memType != "Array") : (ObjGetCapacity(obj) == ""))
-			throw Error("Object type not supported.`r`n`r`nObj Type: " Type(obj), -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
+			throw Error("Object type not supported.", -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
 		
 		if IsInteger(indent)
 		{
@@ -180,7 +178,7 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 				throw Error("Invalid object key.", -1, k ? Format("<Object at 0x{:p}>", ObjPtr(obj)) : "<blank>")
 			
 			if !is_array ;// key ; ObjGetCapacity([k], 1)
-				out .= (ObjGetCapacity([k]) ? Jxon_Dump(k) : q k q) (indent ? ": " : ":") ; token + padding
+				out .= (ObjGetCapacity([k]) ? Jxon_Dump(k) : escape_str(k)) (indent ? ": " : ":") ; token + padding
 			
 			out .= Jxon_Dump(v, indent, lvl) ; value
 				.  ( indent ? ",`n" . indt : "," ) ; token + indent
@@ -196,17 +194,21 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 	} else { ; Number
 		If (Type(obj) != "String")
 			return obj
-		Else {
-            obj := StrReplace(obj,"\","\\")
-			obj := StrReplace(obj,"`t","\t")
-			obj := StrReplace(obj,"`r","\r")
-			obj := StrReplace(obj,"`n","\n")
-			obj := StrReplace(obj,"`b","\b")
-			obj := StrReplace(obj,"`f","\f")
-			obj := StrReplace(obj,"/","\/")
-			obj := StrReplace(obj,q,"\" q)
-			return q obj q
-		}
+		Else
+            return escape_str(obj)
 	}
+    
+    escape_str(obj) {
+        obj := StrReplace(obj,"\","\\")
+        obj := StrReplace(obj,"`t","\t")
+        obj := StrReplace(obj,"`r","\r")
+        obj := StrReplace(obj,"`n","\n")
+        obj := StrReplace(obj,"`b","\b")
+        obj := StrReplace(obj,"`f","\f")
+        obj := StrReplace(obj,"/","\/")
+        obj := StrReplace(obj,'"','\"')
+        
+        return '"' obj '"'
+    }
 }
 
