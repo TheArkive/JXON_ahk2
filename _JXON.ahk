@@ -27,6 +27,8 @@
 ; textData3 := Jxon_dump(newObj,4) ; ===> break down array into 2D layout again, should be identical
 ; msgbox "Second output text:`r`n===========================================`r`n(should be identical to first output)`r`n`r`n" textData3
 
+; msgbox "textData2 = textData3:  " ((textData2=textData3) ? "true" : "false")
+
 ; ExitApp
 
 ; ===========================================================================================
@@ -37,11 +39,9 @@
 ; https://github.com/cocobelgica/AutoHotkey-JSON
 
 Jxon_Load(&src, args*) {
-	; static q := Chr(34)
-	
 	key := "", is_key := false
 	stack := [ tree := [] ]
-	is_arr := Map(tree, 1) ; ahk v2
+	; is_arr := Map(tree, 1) ; ahk v2
 	next := '"{[01234567890-tfn'
 	pos := 0
 	
@@ -71,8 +71,8 @@ Jxon_Load(&src, args*) {
 		}
 		
 		obj := stack[1]
-		memType := Type(obj)
-		is_array := (memType = "Array") ? 1 : 0
+		; memType := Type(obj)
+		is_array := (Type(obj) = "Array")
 		
 		if i := InStr("{[", ch) { ; start new object / map?
 			val := (i = 1) ? Map() : Array()	; ahk v2
@@ -80,11 +80,13 @@ Jxon_Load(&src, args*) {
 			is_array ? obj.Push(val) : obj[key] := val
 			stack.InsertAt(1,val)
 			
-			is_arr[val] := !(is_key := ch == "{")
-			next := '"' (is_key ? "}" : "{[]0123456789-tfn")
+			; is_arr[val] := !(is_key := ch == "{")
+            
+			next := '"' ((is_key := (ch == "{")) ? "}" : "{[]0123456789-tfn")
 		} else if InStr("}]", ch) {
 			stack.RemoveAt(1)
-			next := stack[1]==tree ? "" : is_arr[stack[1]] ? ",]" : ",}"
+			; next := stack[1]==tree ? "" : is_arr[stack[1]] ? ",]" : ",}"
+            next := (stack[1]==tree) ? "" : (Type(stack[1])="Array") ? ",]" : ",}"
 		} else if InStr(",:", ch) {
 			is_key := (!is_array && ch == ",")
 			next := is_key ? '"' : '"{[0123456789-tfn'
@@ -152,10 +154,10 @@ Jxon_Load(&src, args*) {
 
 Jxon_Dump(obj, indent:="", lvl:=1) {
 	if IsObject(obj) {
-		memType := Type(obj) ; Type.Call(obj)
-		is_array := (memType = "Array") ? 1 : 0
+		; memType := Type(obj) ; Type.Call(obj)
+		is_array := ((memType:=Type(obj)) = "Array")
 		
-		if (memType ? (memType != "Object" And memType != "Map" And memType != "Array") : (ObjGetCapacity(obj) == ""))
+		if (memType ? (memType != "Object" && memType != "Map" && memType != "Array") : (ObjGetCapacity(obj) == ""))
 			throw Error("Object type not supported.", -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
 		
 		if IsInteger(indent)
