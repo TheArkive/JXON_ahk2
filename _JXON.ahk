@@ -41,7 +41,6 @@
 Jxon_Load(&src, args*) {
 	key := "", is_key := false
 	stack := [ tree := [] ]
-	; is_arr := Map(tree, 1) ; ahk v2
 	next := '"{[01234567890-tfn'
 	pos := 0
 	
@@ -72,7 +71,8 @@ Jxon_Load(&src, args*) {
 		
 		obj := stack[1]
 		; memType := Type(obj)
-		is_array := (Type(obj) = "Array")
+		; is_array := (Type(obj) = "Array")
+        is_array := (obj is Array)
 		
 		if i := InStr("{[", ch) { ; start new object / map?
 			val := (i = 1) ? Map() : Array()	; ahk v2
@@ -86,7 +86,8 @@ Jxon_Load(&src, args*) {
 		} else if InStr("}]", ch) {
 			stack.RemoveAt(1)
 			; next := stack[1]==tree ? "" : is_arr[stack[1]] ? ",]" : ",}"
-            next := (stack[1]==tree) ? "" : (Type(stack[1])="Array") ? ",]" : ",}"
+            ; next := (stack[1]==tree) ? "" : (Type(stack[1])="Array") ? ",]" : ",}"
+            next := (stack[1]==tree) ? "" : (stack[1] is Array) ? ",]" : ",}"
 		} else if InStr(",:", ch) {
 			is_key := (!is_array && ch == ",")
 			next := is_key ? '"' : '"{[0123456789-tfn'
@@ -155,9 +156,11 @@ Jxon_Load(&src, args*) {
 Jxon_Dump(obj, indent:="", lvl:=1) {
 	if IsObject(obj) {
 		; memType := Type(obj) ; Type.Call(obj)
-		is_array := ((memType:=Type(obj)) = "Array")
+		; is_array := ((memType:=Type(obj)) = "Array")
+        is_array := (obj is Array)
 		
-		if (memType ? (memType != "Object" && memType != "Map" && memType != "Array") : (ObjGetCapacity(obj) == ""))
+		; if ((memType:=Type(obj)) ? (memType != "Object" && memType != "Map" && memType != "Array") : (ObjGetCapacity(obj) == ""))
+        if ((memType:=Type(obj)) != "Object" && memType != "Map" && memType != "Array")
 			throw Error("Object type not supported.", -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
 		
 		if IsInteger(indent)
