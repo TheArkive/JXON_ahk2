@@ -29,8 +29,6 @@
 
 ; msgbox "textData2 = textData3:  " ((textData2=textData3) ? "true" : "false")
 
-; ExitApp
-
 ; ===========================================================================================
 ; End Example ; =============================================================================
 ; ===========================================================================================
@@ -70,8 +68,6 @@ Jxon_Load(&src, args*) {
 		}
 		
 		obj := stack[1]
-		; memType := Type(obj)
-		; is_array := (Type(obj) = "Array")
         is_array := (obj is Array)
 		
 		if i := InStr("{[", ch) { ; start new object / map?
@@ -80,13 +76,9 @@ Jxon_Load(&src, args*) {
 			is_array ? obj.Push(val) : obj[key] := val
 			stack.InsertAt(1,val)
 			
-			; is_arr[val] := !(is_key := ch == "{")
-            
 			next := '"' ((is_key := (ch == "{")) ? "}" : "{[]0123456789-tfn")
 		} else if InStr("}]", ch) {
 			stack.RemoveAt(1)
-			; next := stack[1]==tree ? "" : is_arr[stack[1]] ? ",]" : ",}"
-            ; next := (stack[1]==tree) ? "" : (Type(stack[1])="Array") ? ",]" : ",}"
             next := (stack[1]==tree) ? "" : (stack[1] is Array) ? ",]" : ",}"
 		} else if InStr(",:", ch) {
 			is_key := (!is_array && ch == ",")
@@ -155,12 +147,7 @@ Jxon_Load(&src, args*) {
 
 Jxon_Dump(obj, indent:="", lvl:=1) {
 	if IsObject(obj) {
-		; memType := Type(obj) ; Type.Call(obj)
-		; is_array := ((memType:=Type(obj)) = "Array")
-        is_array := (obj is Array)
-		
-		; if ((memType:=Type(obj)) ? (memType != "Object" && memType != "Map" && memType != "Array") : (ObjGetCapacity(obj) == ""))
-        if ((memType:=Type(obj)) != "Object" && memType != "Map" && memType != "Array")
+        If !(obj is Array || obj is Map || obj is String || obj is Number)
 			throw Error("Object type not supported.", -1, Format("<Object at 0x{:p}>", ObjPtr(obj)))
 		
 		if IsInteger(indent)
@@ -176,7 +163,9 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 		
 		Loop indent ? lvl : 0
 			indt .= indent
-
+        
+        is_array := (obj is Array)
+        
 		lvl += 1, out := "" ; Make #Warn happy
 		for k, v in obj {
 			if IsObject(k) || (k == "")
@@ -196,13 +185,13 @@ Jxon_Dump(obj, indent:="", lvl:=1) {
 		}
 		
 		return is_array ? "[" . out . "]" : "{" . out . "}"
-	} else { ; Number
-		If (Type(obj) != "String")
-			return obj
-		Else
-            return escape_str(obj)
-	}
+	
+    } Else If (obj is Number)
+        return obj
     
+    Else ; String
+        return escape_str(obj)
+	
     escape_str(obj) {
         obj := StrReplace(obj,"\","\\")
         obj := StrReplace(obj,"`t","\t")
